@@ -1,0 +1,180 @@
+﻿@model TutorialApp.Models.Cars
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+@functions
+{
+    string Greeting(string user)
+    {
+        return $"Hello {user}";
+    }
+
+    string DetailsText()
+    {
+        return $"Details for {Model.Year} {Model.Make} {Model.Model}";
+    }
+
+    string Drive(double miles)
+    {
+        try
+        {
+            int Year = Model.Year;
+            string Make = Model.Make;
+            string model = Model.Model;
+            double Mpg = Model.Mpg;
+            double TankSize = Model.TankSize;
+            double Gas = Model.Gas;
+
+            double lowGas = (TankSize * Mpg) * 0.15;
+            int fuelStops = 0;
+            double gasUsed = 0;
+
+            for (int i = 0; i <= miles; i++)
+            {
+                //subtracts 1 mile's worth of gas from the tank, and adds the same amount to the gasUsed variable
+                Gas = Gas - (1 / Mpg);
+                gasUsed = gasUsed + (1 / Mpg);
+
+                if (Gas * Mpg <= lowGas)
+                {
+                    fuelStops++;
+                    //Console.WriteLine($"Your {Make} {Model} needed to stop for gas. Stops so far: {fuelStops}.");
+                    Gas = Gas - (5 / Mpg);
+                    gasUsed = gasUsed + (5 / Mpg);
+                    Gas = TankSize;
+                }
+                else if (i >= miles)
+                {
+                    return $"In order to travel {miles} miles, this car would use {Math.Round(gasUsed, 2)} gallons of gas, and need to stop {fuelStops} times to refuel.";
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            //all codepaths must return a string. Err handling here
+            return "Error for loop";
+        }
+        catch (Exception e)
+        {
+            return $"Error: {e}";
+        }
+    }
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>@DetailsText()</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Year)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Year)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Make)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Make)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Model)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Model)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Mpg)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Mpg)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.TankSize)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.TankSize)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Gas)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Gas)
+        </dd>
+    </dl>
+</div>
+<div class="form-group">
+    <div>
+        <label for="MilesArg" class="control-label">Calculate fuel usage and cost by entering trip distance in miles, and cost per gallon of fuel.</label>
+    </div>
+    <div>
+        <input type="number" id="MilesArg" size="50" placeholder="Miles Travelled" />
+        <input type="number" id="FuelCost" size="50" placeholder="Cost per gallon of fuel" />
+    </div>
+    <button id="MilesArgBtn" class="button.accept-policy" onclick="myFunction()">Calculate</button>
+
+    <p id="ResultText"></p>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>
+
+
+
+<script>
+    //in order to access model data in JS, you'll need to use the "AT" modifier
+    function myFunction() {;
+        var miles = Number(document.getElementById("MilesArg").value);
+        var FuelCost = Number(document.getElementById("FuelCost").value);
+
+        var Year = @Model.Year;
+        var Make = "@Model.Make";
+        var Model = "@Model.Model";
+        var Mpg = @Model.Mpg;
+        var TankSize = @Model.TankSize;
+        var Gas = @Model.Gas;
+        //You find that you cannot turn make and model into a variable, because Model.Make returns in plaintext SomeMake instead of "SomeMake".
+        //For JS to read this as a string, it requires "", otherwise it tries to read it as a variable that does not exist. ("Html.DisplayFor(model => model.Make)" returns the same)
+        //Fortunately since the model data itself is unaffected by JS behavior, and you are simply making variables as clones of the existing data on the frontend, you can simply add '' around the variables you expect to be strings
+        var lowGas = (TankSize * Mpg) * 0.15;
+        var fuelStops = 0;
+        var gasUsed = 0;
+
+        //demonstation of above concept using
+        console.log(typeof @Model.Make);//Returns Undefined
+        console.log(typeof @Model.Mpg);//Returns Number
+        console.log(typeof @Html.Raw(Model.Make));//Returns undefined
+        console.log(typeof "@Model.Make");//Returns String
+
+        document.getElementById("ResultText").innerHTML = "Err before for loop";
+
+        for (let i = 0; i <= miles; i++) {
+            //subtracts 1 mile's worth of gas from the tank, and adds the same amount to the gasUsed variable
+            Gas = Gas - (1 / Mpg);
+            gasUsed = gasUsed + (1 / Mpg);
+
+            if (Gas * Mpg <= lowGas) {
+                fuelStops++;
+                console.log("You needed to stop for gas. Stops so far: "+ fuelStops + ".");
+                Gas = Gas - (5 / Mpg);
+                gasUsed = gasUsed + (5 / Mpg);
+                Gas = TankSize;
+
+            }
+            else if (i >= miles) {
+                gasUsed = Math.round(gasUsed * 100) / 100;
+                totalCost = Math.round((gasUsed * FuelCost) * 100) / 100
+                document.getElementById("ResultText").innerHTML = "In order to travel <b>" + miles + " miles</b>, this " + Make + " " +  Model + " would use <b>" + gasUsed + " gallons</b> of gas, at a cost of <b>$" + totalCost + "</b> and need to stop <b>" + fuelStops + " times</b> to refuel.";
+
+            } else {
+                continue;
+            }
+        }
+    }
+</script>
